@@ -1,0 +1,2486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>排单员平台 - 工单编辑</title>
+  <!-- 引入外部资源 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  
+  <style>
+    /* 基础样式（复用） */
+    body { font-family: "微软雅黑", "思源黑体", sans-serif; background-color: #f5f7fa; color: #333; margin: 0; padding: 0; }
+    .btn-primary { background-color: #4A90E2; border-color: #4A90E2; }
+    .btn-primary:hover { background-color: #357ABD; border-color: #357ABD; }
+    .btn-outline-secondary { border-color: #ddd; color: #666; }
+    .btn-outline-secondary:hover { background-color: #f5f5f5; border-color: #ccc; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; border-radius: 12px 12px 0 0; padding: 15px 20px; font-weight: 600; font-size: 15px; }
+    .card-body { padding: 20px; }
+    .badge { font-size: 12px; }
+
+    /* 布局样式（复用） */
+    .app-container { display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; background: #fff; box-shadow: 1px 0 2px rgba(0,0,0,0.05); padding: 20px 0; flex-shrink: 0; }
+    .sidebar-logo { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+    .sidebar-logo img { height: 40px; margin-bottom: 8px; }
+    .sidebar-logo h3 { font-size: 16px; color: #4A90E2; font-weight: 600; margin: 0; }
+    .nav-menu { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link { display: flex; align-items: center; padding: 12px 20px; color: #666; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+    .nav-link:hover, .nav-link.active { color: #4A90E2; background-color: #F0F5FA; border-left: 3px solid #4A90E2; }
+    .nav-link i { font-size: 18px; margin-right: 12px; width: 20px; text-align: center; }
+    .nav-group-title { padding: 15px 20px 5px; font-size: 12px; color: #999; font-weight: 500; }
+
+    /* 主内容区（复用+新增） */
+    .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+    .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .page-title { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+    .user-info { display: flex; align-items: center; }
+    .notification { position: relative; margin-right: 20px; cursor: pointer; }
+    .notification i { font-size: 20px; color: #666; }
+    .notification-badge { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; background: #FF4D4F; color: #fff; border-radius: 50%; font-size: 12px; text-align: center; line-height: 18px; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #4A90E2; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; margin-right: 10px; }
+    .user-name { font-size: 14px; font-weight: 500; }
+
+    /* 排单方式切换样式（新增） */
+    .order-type-tabs { border-bottom: 1px solid #dee2e6; margin-bottom: 20px; }
+    .order-type-tabs .nav-link { border: none; border-bottom: 2px solid transparent; color: #666; padding: 10px 20px; font-weight: 500; }
+    .order-type-tabs .nav-link.active { color: #4A90E2; border-bottom-color: #4A90E2; background: transparent; }
+
+    /* 筛选区样式（新增） */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; }
+    .filter-group { flex: 1; min-width: 150px; }
+    .filter-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
+    .search-box { flex: 2; min-width: 200px; }
+
+    /* 视图切换样式（新增） */
+    .view-switch { display: flex; justify-content: flex-end; margin-bottom: 15px; gap: 10px; }
+    .view-btn { padding: 5px 15px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; }
+    .view-btn.active { background-color: #4A90E2; color: #fff; border-color: #4A90E2; }
+
+    /* 日历视图样式（新增） */
+    .calendar-view { overflow-x: auto; margin-bottom: 20px; }
+    .calendar-table { width: 100%; border-collapse: collapse; }
+    .calendar-table th, .calendar-table td { border: 1px solid #e8e8e8; padding: 10px; text-align: center; }
+    .calendar-table th { background-color: #f8f9fa; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+    .calendar-table .nurse-row th { background-color: #F0F5FA; text-align: left; position: sticky; left: 0; z-index: 11; min-width: 150px; }
+    .calendar-cell { min-width: 100px; height: 80px; cursor: pointer; vertical-align: top; }
+    .calendar-cell:hover { background-color: #f5f5f5; }
+    .cell-count { font-size: 12px; color: #666; }
+    .cell-completed { color: #52C41A; font-weight: 500; }
+    .cell-pending { color: #FAAD14; font-weight: 500; }
+    .mobile-edit-tag { font-size: 11px; color: #999; margin-top: 5px; }
+    .pc-edit-tag { font-size: 11px; color: #4A90E2; margin-top: 5px; }
+    .data-source-badge { font-size: 11px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; }
+    .source-mobile { background-color: #FFF7E6; color: #FA8C16; }
+    .source-pc { background-color: #E8F2F9; color: #4A90E2; }
+    .update-notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; background-color: #FFF7E6; border-left: 4px solid #FA8C16; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; display: none; max-width: 300px; }
+
+    /* 列表视图样式（新增） */
+    .list-view { display: none; }
+    .list-view.active { display: block; }
+    .order-list-group { margin-bottom: 20px; }
+    .order-group-header { background-color: #F0F5FA; padding: 10px 15px; border-radius: 8px 8px 0 0; font-weight: 600; display: flex; justify-content: space-between; }
+    .order-list-table { width: 100%; border-collapse: collapse; }
+    .order-list-table th, .order-list-table td { border: 1px solid #e8e8e8; padding: 10px; text-align: left; font-size: 14px; }
+    .order-list-table th { background-color: #f8f9fa; font-weight: 600; }
+    .status-pending { color: #FAAD14; }
+    .status-doing { color: #4A90E2; }
+    .status-completed { color: #52C41A; }
+    .operation-btn { display: flex; gap: 5px; }
+    .disabled-btn { opacity: 0.5; cursor: not-allowed; }
+    
+    /* 同步状态样式 */
+    .status-unsynced { color: #666; background-color: #f5f5f5; }
+    .status-synced { color: #52C41A; background-color: #F6FFED; }
+    .status-resync { color: #FF4D4F; background-color: #FFF2F2; }
+    .status-deleted { color: #FAAD14; background-color: #FFF7E6; }
+    
+    /* 工单行颜色区分（已同步/未同步） */
+    .order-list-table tbody tr.row-unsynced {
+      background-color: #fff;
+    }
+    .order-list-table tbody tr.row-synced {
+      background-color: #F6FFED;
+      border-left: 3px solid #52C41A;
+    }
+    .order-list-table tbody tr.row-resync {
+      background-color: #FFF2F2;
+      border-left: 3px solid #FF4D4F;
+    }
+    .order-list-table tbody tr.row-deleted {
+      background-color: #FFF7E6;
+      border-left: 3px solid #FAAD14;
+    }
+    .order-list-table tbody tr:hover {
+      opacity: 0.9;
+    }
+    
+    /* 可点击的同步状态 */
+    .sync-status-clickable {
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      transition: all 0.2s;
+    }
+    .sync-status-clickable:hover {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+
+    /* 弹窗表单样式（新增） */
+    .form-item { margin-bottom: 15px; }
+    .form-item label { display: block; margin-bottom: 5px; font-weight: 500; }
+    .form-item .form-control[readonly] { background-color: #f5f5f5; }
+    .compliance-tip { font-size: 12px; color: #FAAD14; margin-top: 5px; }
+    .error-tip { font-size: 12px; color: #FF4D4F; margin-top: 5px; }
+
+    /* 同步提示样式（新增） */
+    .sync-alert { position: fixed; bottom: 20px; right: 20px; padding: 15px 20px; background-color: #F0F5FA; border-left: 4px solid #4A90E2; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 999; display: none; }
+    .sync-success { border-left-color: #52C41A; background-color: #F6FFED; }
+    .sync-error { border-left-color: #FF4D4F; background-color: #FFF2F2; }
+
+    /* 拖拽排单样式（新增） */
+    .drag-schedule-container { display: flex; gap: 20px; min-height: 600px; }
+    .service-object-panel { width: 300px; background: #fff; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .panel-header { font-weight: 600; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
+    .object-list { max-height: 500px; overflow-y: auto; }
+    .draggable-object { padding: 12px; margin-bottom: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 6px; cursor: move; transition: all 0.3s; }
+    .draggable-object:hover { background: #E8F2F9; border-color: #4A90E2; transform: translateX(5px); }
+    .draggable-object.dragging { opacity: 0.5; transform: scale(0.95); }
+    .object-name { font-weight: 600; font-size: 14px; color: #333; margin-bottom: 5px; }
+    .object-info { font-size: 12px; color: #666; }
+    .object-badge { display: inline-block; padding: 2px 8px; background: #E8F2F9; color: #4A90E2; border-radius: 3px; font-size: 11px; margin-top: 5px; }
+    
+    .calendar-panel { flex: 1; background: #fff; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .calendar-nav-btn { padding: 5px 15px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; }
+    .calendar-nav-btn:hover { background: #f5f5f5; }
+    .current-month { font-weight: 600; font-size: 16px; }
+    
+    .drag-calendar { width: 100%; border-collapse: collapse; }
+    .drag-calendar th, .drag-calendar td { border: 1px solid #e8e8e8; padding: 8px; text-align: center; }
+    .drag-calendar th { background: #f8f9fa; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+    .drag-calendar .nurse-header { background: #F0F5FA; text-align: left; position: sticky; left: 0; z-index: 11; min-width: 120px; }
+    .drop-cell { min-height: 100px; position: relative; background: #fafafa; cursor: pointer; }
+    .drop-cell.drag-over { background: #E8F2F9; border: 2px dashed #4A90E2; }
+    .drop-cell.has-order { background: #fff; }
+    
+    .scheduled-order { padding: 6px 8px; margin: 4px 0; background: #4A90E2; color: #fff; border-radius: 4px; font-size: 12px; cursor: move; position: relative; }
+    .scheduled-order:hover { background: #357ABD; }
+    .scheduled-order.dragging { opacity: 0.5; }
+    .order-time { font-weight: 600; margin-bottom: 2px; }
+    .order-name { font-size: 11px; opacity: 0.9; }
+    .order-actions { position: absolute; top: 2px; right: 2px; display: none; }
+    .scheduled-order:hover .order-actions { display: block; }
+    .order-actions button { padding: 2px 6px; background: rgba(255,255,255,0.9); border: none; border-radius: 3px; cursor: pointer; font-size: 10px; }
+    .order-actions .btn-edit { color: #4A90E2; }
+    .order-actions .btn-delete { color: #FF4D4F; }
+    
+    .time-slot-selector { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+    .time-slot-selector label { font-size: 12px; font-weight: 500; margin-bottom: 5px; display: block; }
+    .time-inputs { display: flex; gap: 5px; align-items: center; }
+    .time-inputs input { flex: 1; }
+    
+    .conflict-warning { background: #fff7e6; border-left: 3px solid #faad14; padding: 8px; margin-top: 5px; border-radius: 4px; font-size: 12px; color: #fa8c16; }
+    .empty-state { text-align: center; padding: 40px; color: #999; }
+    .empty-state i { font-size: 48px; margin-bottom: 10px; opacity: 0.3; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 侧边导航 -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <img src="https://via.placeholder.com/80x40?text=居家长护" alt="系统Logo">
+        <h3>排单员工作平台</h3>
+      </div>
+      
+      <div class="nav-group-title">工单管理</div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="index.html" class="nav-link active">
+            <i class="fa fa-file-text-o"></i>
+            <span>排单编辑</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 顶部导航 -->
+      <div class="top-nav">
+        <h1 class="page-title">工单编辑</h1>
+        <div class="user-info">
+          <div class="notification">
+            <i class="fa fa-bell-o"></i>
+            <span class="notification-badge">3</span>
+          </div>
+          <div class="user-avatar">排</div>
+          <div class="user-name">排单员</div>
+        </div>
+      </div>
+
+      <!-- 排单方式切换 -->
+      <div class="order-type-tabs">
+        <ul class="nav nav-tabs" id="orderTypeTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="view-order-tab" data-bs-toggle="tab" data-bs-target="#view-order" type="button" role="tab">查看工单</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="manual-order-tab" data-bs-toggle="tab" data-bs-target="#manual-order" type="button" role="tab">手工排单</button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- 标签页内容 -->
+      <div class="tab-content" id="orderTypeTabsContent">
+        <!-- 查看工单标签页（护理员手机端派单结果） -->
+        <div class="tab-pane fade show active" id="view-order" role="tabpanel">
+          <!-- 说明提示 -->
+          <div class="alert alert-info mb-3" role="alert">
+            <i class="fa fa-info-circle"></i> 
+            <strong>说明：</strong>本页面用于查看护理员在手机端派单的结果。排单员可以查看、修改工单，并手工更新到医保系统。PC端修改后会自动同步到护理员手机端，护理员会收到数据更新提示。
+          </div>
+          
+          <!-- 筛选区 -->
+          <div class="filter-bar">
+            <div class="filter-group">
+              <label>护理员</label>
+              <select class="form-select" id="nurseFilter">
+                <option value="all">所有护理员</option>
+                <option value="李护理">李护理</option>
+                <option value="王护理">王护理</option>
+                <option value="张护理">张护理</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>服务日期（及以后）</label>
+              <input type="date" class="form-control" id="serviceDateFilter" value="2024-11-01">
+            </div>
+            <div class="filter-group">
+              <label>同步状态</label>
+              <select class="form-select" id="syncStatusFilter">
+                <option value="all">全部</option>
+                <option value="unsynced">未同步</option>
+                <option value="synced">已同步</option>
+              </select>
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-outline-secondary" id="refreshBtn"><i class="fa fa-refresh"></i> 刷新</button>
+            </div>
+          </div>
+
+          <!-- 视图切换 -->
+          <div class="view-switch">
+            <button class="view-btn active" id="calendarViewBtn"><i class="fa fa-calendar"></i> 日历视图</button>
+            <button class="view-btn" id="listViewBtn"><i class="fa fa-list"></i> 列表视图</button>
+          </div>
+
+          <!-- 日历视图 -->
+          <div class="calendar-view" id="calendarView">
+            <table class="calendar-table">
+              <thead>
+                <tr>
+                  <th rowspan="2">护理员</th>
+                  <th>2024-11-01</th>
+                  <th>2024-11-02</th>
+                  <th>2024-11-03</th>
+                  <th>2024-11-04</th>
+                  <th>2024-11-05</th>
+                  <th>2024-11-06</th>
+                  <th>2024-11-07</th>
+                  <th>2024-11-08</th>
+                  <th>2024-11-09</th>
+                  <th>2024-11-10</th>
+                </tr>
+                <tr>
+                  <td>周五</td>
+                  <td>周六</td>
+                  <td>周日</td>
+                  <td>周一</td>
+                  <td>周二</td>
+                  <td>周三</td>
+                  <td>周四</td>
+                  <td>周五</td>
+                  <td>周六</td>
+                  <td>周日</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="nurse-row">
+                  <th>李护理</th>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                    <div class="mobile-edit-tag">手机端修改</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">4</div>
+                    <div class="cell-count">/ 已完成1</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell"></td>
+                </tr>
+                <tr class="nurse-row">
+                  <th>王护理</th>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成1</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                </tr>
+                <tr class="nurse-row">
+                  <th>张护理</th>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell"></td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">2</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                  <td class="calendar-cell">
+                    <div class="cell-pending">3</div>
+                    <div class="cell-count">/ 已完成0</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 列表视图 -->
+          <div class="list-view" id="listView">
+            <!-- 李护理 - 2024-11-01 -->
+            <div class="order-list-group">
+              <div class="order-group-header">
+                <span>李护理 - 2024-11-01（周五）</span>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#autoOrderModal">
+                    <i class="fa fa-plus"></i> 新增工单
+                  </button>
+                </div>
+              </div>
+              <table class="order-list-table">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" id="selectAllLi"></th>
+                    <th>服务对象</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>服务套餐</th>
+                    <th>状态</th>
+                    <th>同步状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="row-unsynced" data-order-id="GD202411001" data-sync-status="unsynced">
+                    <td><input type="checkbox" name="orderItem"></td>
+                    <td>郑三 <span class="data-source-badge source-mobile">手机端</span></td>
+                    <td>08:00</td>
+                    <td>10:00</td>
+                    <td>生活照料+基础护理</td>
+                    <td><span class="status-pending">待执行</span></td>
+                    <td><span class="badge status-unsynced sync-status-clickable" data-action="toggle-sync">未同步</span></td>
+                    <td class="operation-btn">
+                      <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editOrderModal" onclick="setEditOrderData('郑三', '2024-11-01', '08:00', '10:00', '生活照料+基础护理', 'mobile')">
+                        <i class="fa fa-pencil"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-info sync-toggle-btn" data-action="mark-sync" data-order-id="GD202411001">
+                        <i class="fa fa-refresh"></i> 标记同步
+                      </button>
+                      <button class="btn btn-sm btn-danger">
+                        <i class="fa fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="row-synced" data-order-id="GD202411002" data-sync-status="synced">
+                    <td><input type="checkbox" name="orderItem"></td>
+                    <td>王五 <span class="data-source-badge source-mobile">手机端</span></td>
+                    <td>10:30</td>
+                    <td>12:30</td>
+                    <td>生活照料</td>
+                    <td><span class="status-pending">待执行</span></td>
+                    <td><span class="badge status-synced sync-status-clickable" data-action="toggle-sync">已同步</span></td>
+                    <td class="operation-btn">
+                      <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editOrderModal" onclick="setEditOrderData('王五', '2024-11-01', '10:30', '12:30', '生活照料', 'mobile')">
+                        <i class="fa fa-pencil"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-warning sync-toggle-btn" data-action="resync" data-order-id="GD202411002">
+                        <i class="fa fa-refresh"></i> 重新同步
+                      </button>
+                      <button class="btn btn-sm btn-danger">
+                        <i class="fa fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="row-unsynced" data-order-id="GD202411003" data-sync-status="unsynced">
+                    <td><input type="checkbox" name="orderItem"></td>
+                    <td>赵六 <span class="data-source-badge source-mobile">手机端</span></td>
+                    <td>14:00</td>
+                    <td>16:00</td>
+                    <td>基础护理+康复指导</td>
+                    <td><span class="status-pending">待执行</span></td>
+                    <td><span class="badge status-unsynced sync-status-clickable" data-action="toggle-sync">未同步</span></td>
+                    <td class="operation-btn">
+                      <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editOrderModal" onclick="setEditOrderData('赵六', '2024-11-01', '14:00', '16:00', '基础护理+康复指导', 'mobile')">
+                        <i class="fa fa-pencil"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-info sync-toggle-btn" data-action="mark-sync" data-order-id="GD202411003">
+                        <i class="fa fa-refresh"></i> 标记同步
+                      </button>
+                      <button class="btn btn-sm btn-danger">
+                        <i class="fa fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 李护理 - 2024-11-02 -->
+            <div class="order-list-group">
+              <div class="order-group-header">
+                <span>李护理 - 2024-11-02（周六）<span class="mobile-edit-tag">手机端修改</span></span>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#autoOrderModal">
+                    <i class="fa fa-plus"></i> 新增工单
+                  </button>
+                </div>
+              </div>
+              <table class="order-list-table">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox"></th>
+                    <th>服务对象</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>服务套餐</th>
+                    <th>状态</th>
+                    <th>同步状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="row-unsynced" data-order-id="GD202411004" data-sync-status="unsynced">
+                    <td><input type="checkbox"></td>
+                    <td>钱七 <span class="data-source-badge source-mobile">手机端</span></td>
+                    <td>09:00</td>
+                    <td>11:00</td>
+                    <td>生活照料+基础护理</td>
+                    <td><span class="status-pending">待执行</span></td>
+                    <td><span class="badge status-unsynced sync-status-clickable" data-action="toggle-sync">未同步</span></td>
+                    <td class="operation-btn">
+                      <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editOrderModal" onclick="setEditOrderData('钱七', '2024-11-02', '09:00', '11:00', '生活照料+基础护理', 'mobile')">
+                        <i class="fa fa-pencil"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-info sync-toggle-btn" data-action="mark-sync" data-order-id="GD202411004">
+                        <i class="fa fa-refresh"></i> 标记同步
+                      </button>
+                      <button class="btn btn-sm btn-danger">
+                        <i class="fa fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="row-unsynced" data-order-id="GD202411005" data-sync-status="unsynced">
+                    <td><input type="checkbox"></td>
+                    <td>孙八 <span class="data-source-badge source-mobile">手机端</span></td>
+                    <td>14:30</td>
+                    <td>16:30</td>
+                    <td>基础护理</td>
+                    <td><span class="status-pending">待执行</span></td>
+                    <td><span class="badge status-unsynced sync-status-clickable" data-action="toggle-sync">未同步</span></td>
+                    <td class="operation-btn">
+                      <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editOrderModal" onclick="setEditOrderData('孙八', '2024-11-02', '14:30', '16:30', '基础护理', 'mobile')">
+                        <i class="fa fa-pencil"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-info sync-toggle-btn" data-action="mark-sync" data-order-id="GD202411005">
+                        <i class="fa fa-refresh"></i> 标记同步
+                      </button>
+                      <button class="btn btn-sm btn-danger">
+                        <i class="fa fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 批量操作区 -->
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+              <button class="btn btn-outline-secondary" id="exportBtn">
+                <i class="fa fa-download"></i> 导出工单列表
+              </button>
+            </div>
+            <div>
+              <button class="btn btn-outline-secondary ms-2" id="batchDeleteBtn">
+                <i class="fa fa-trash"></i> 批量删除
+              </button>
+              <button class="btn btn-outline-secondary ms-2" id="batchModifyBtn">
+                <i class="fa fa-refresh"></i> 批量修改套餐
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 手工排单标签页 -->
+        <div class="tab-pane fade" id="manual-order" role="tabpanel">
+          <div class="alert alert-info mb-3" role="alert">
+            <i class="fa fa-info-circle"></i> 
+            <strong>拖拽排单说明：</strong>从左侧服务对象列表拖拽到右侧日历表格中，即可快速排单。支持拖拽调整已排单的服务对象位置。
+          </div>
+
+          <!-- 拖拽排单容器 -->
+          <div class="drag-schedule-container">
+            <!-- 左侧：服务对象列表 -->
+            <div class="service-object-panel">
+              <div class="panel-header">
+                <i class="fa fa-users"></i> 服务对象列表
+              </div>
+              <div class="form-item mb-3">
+                <input type="text" class="form-control" id="objectSearchInput" placeholder="搜索服务对象...">
+              </div>
+              <div class="object-list" id="objectList">
+                <!-- 服务对象将通过JS动态生成 -->
+              </div>
+            </div>
+
+            <!-- 右侧：日历排单面板 -->
+            <div class="calendar-panel">
+              <div class="calendar-controls">
+                <button class="calendar-nav-btn" id="prevMonthBtn">
+                  <i class="fa fa-chevron-left"></i> 上月
+                </button>
+                <div class="current-month" id="currentMonthDisplay">2024年11月</div>
+                <button class="calendar-nav-btn" id="nextMonthBtn">
+                  下月 <i class="fa fa-chevron-right"></i>
+                </button>
+              </div>
+              
+              <div style="overflow-x: auto;">
+                <table class="drag-calendar" id="dragCalendar">
+                  <thead id="calendarHeader">
+                    <!-- 表头将通过JS动态生成 -->
+                  </thead>
+                  <tbody id="calendarBody">
+                    <!-- 日历内容将通过JS动态生成 -->
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-3 d-flex justify-content-end gap-2">
+                <button class="btn btn-outline-secondary" id="clearAllOrdersBtn">
+                  <i class="fa fa-trash"></i> 清空所有排单
+                </button>
+                <button class="btn btn-primary" id="saveDragOrdersBtn">
+                  <i class="fa fa-save"></i> 保存排单
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 自动排单弹窗 -->
+  <div class="modal fade" id="autoOrderModal" tabindex="-1" aria-labelledby="autoOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="autoOrderModalLabel">自动排单设置</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-item">
+                <label>护理员 <span class="text-danger">*</span></label>
+                <select class="form-select" multiple>
+                  <option value="李护理" selected>李护理</option>
+                  <option value="王护理">王护理</option>
+                  <option value="张护理">张护理</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-item">
+                <label>时间范围 <span class="text-danger">*</span></label>
+                <div class="d-flex gap-2">
+                  <input type="date" class="form-control" value="2024-11-01">
+                  <span class="align-middle">至</span>
+                  <input type="date" class="form-control" value="2024-11-30">
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-item">
+                <label>服务对象筛选</label>
+                <div class="d-flex gap-2">
+                  <select class="form-control">
+                    <option value="area">行政区域</option>
+                    <option value="level">失能等级</option>
+                  </select>
+                  <select class="form-control">
+                    <option value="">所有区域</option>
+                    <option value="石璜镇">石璜镇</option>
+                    <option value="长乐镇">长乐镇</option>
+                    <option value="甘霖镇">甘霖镇</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-item">
+                <label>服务套餐 <span class="text-danger">*</span></label>
+                <select class="form-select">
+                  <option value="">请选择服务套餐</option>
+                  <option value="生活照料+基础护理">生活照料+基础护理（常用）</option>
+                  <option value="生活照料">生活照料</option>
+                  <option value="基础护理">基础护理</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="form-item">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="cycleWeek" checked>
+                  <label class="form-check-label" for="cycleWeek">按周循环</label>
+                </div>
+                <div class="cycle-days mt-2">
+                  <label>循环星期：</label>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="mon" checked>
+                      <label class="form-check-label" for="mon">周一</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="tue" checked>
+                      <label class="form-check-label" for="tue">周二</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="wed" checked>
+                      <label class="form-check-label" for="wed">周三</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="thu" checked>
+                      <label class="form-check-label" for="thu">周四</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="fri" checked>
+                      <label class="form-check-label" for="fri">周五</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="complianceCheck" checked>
+                <label class="form-check-label" for="complianceCheck">开启合规校验（推荐）</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary">预览工单</button>
+          <button type="button" class="btn btn-primary">生成工单</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑工单弹窗 -->
+  <div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editOrderModalLabel">修改工单 - 李护理</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-item">
+            <label>服务对象</label>
+            <input type="text" class="form-control" id="editServiceObject" value="郑三" readonly>
+          </div>
+          <div class="form-item">
+            <label>数据来源</label>
+            <div>
+              <span class="data-source-badge source-mobile" id="editDataSource">手机端创建</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label>服务日期 <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="editServiceDate" value="2024-11-01">
+          </div>
+          <div class="form-item">
+            <label>服务时间段 <span class="text-danger">*</span></label>
+            <div class="d-flex gap-2">
+              <input type="time" class="form-control" id="editStartTime" value="08:00">
+              <span class="align-middle">-</span>
+              <input type="time" class="form-control" id="editEndTime" value="10:00">
+            </div>
+          </div>
+          <div class="form-item">
+            <label>服务套餐 <span class="text-danger">*</span></label>
+            <select class="form-select" id="editServicePackage">
+              <option value="生活照料+基础护理" selected>生活照料+基础护理</option>
+              <option value="生活照料">生活照料</option>
+              <option value="基础护理">基础护理</option>
+            </select>
+            <div class="compliance-tip">合规提示：该套餐本月剩余次数充足</div>
+          </div>
+          <div class="alert alert-warning mt-3" style="font-size: 12px;">
+            <i class="fa fa-exclamation-triangle"></i> 
+            修改后将自动同步到护理员手机端，护理员会收到数据更新提示
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="saveEditBtn">保存修改</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+  <!-- 排单详情编辑弹窗 -->
+  <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="orderDetailModalLabel">排单详情设置</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-item">
+                <label>计划日期 <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="detailPlanDate">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-item">
+                <label>计划开始时间 <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" id="detailPlanStartTime">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-item">
+                <label>计划结束时间 <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" id="detailPlanStopTime">
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="detailOrderKey">
+          <input type="hidden" id="detailOrderIndex">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="saveDetailBtn">保存</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 工单同步管理弹窗 -->
+  <div class="modal fade" id="orderSyncModal" tabindex="-1" aria-labelledby="orderSyncModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="orderSyncModalLabel">工单同步管理</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- 工单基本信息 -->
+          <div class="card mb-3">
+            <div class="card-header">工单基本信息</div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <table class="table table-sm mb-0">
+                    <tr>
+                      <td width="30%">工单ID</td>
+                      <td id="syncOrderId">-</td>
+                    </tr>
+                    <tr>
+                      <td>服务对象</td>
+                      <td id="syncClientName">-</td>
+                    </tr>
+                    <tr>
+                      <td>服务日期</td>
+                      <td id="syncServiceDate">-</td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="col-md-6">
+                  <table class="table table-sm mb-0">
+                    <tr>
+                      <td width="30%">护理员</td>
+                      <td id="syncNurseName">-</td>
+                    </tr>
+                    <tr>
+                      <td>当前同步状态</td>
+                      <td id="syncStatusBadge"><span class="badge status-unsynced">未同步</span></td>
+                    </tr>
+                    <tr>
+                      <td>同步时间</td>
+                      <td id="syncTime">-</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 同步操作 -->
+          <div class="card mb-3">
+            <div class="card-header">同步操作</div>
+            <div class="card-body">
+              <p class="text-muted mb-3">标记该工单已同步到医保系统，用于筛选未同步的工单。</p>
+              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#markSyncModal" id="markSyncBtn">
+                <i class="fa fa-check"></i> 标记为已同步
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标记同步弹窗 -->
+  <div class="modal fade" id="markSyncModal" tabindex="-1" aria-labelledby="markSyncModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="markSyncModalLabel">标记工单已同步</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">确认将该工单标记为已同步到医保系统？</p>
+          <div class="form-item">
+            <label>同步日期 <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="syncDate" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="confirmMarkSyncBtn">确认标记</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 同步提示弹窗 -->
+  <div class="sync-alert" id="syncSuccessAlert">
+    <i class="fa fa-check-circle text-success"></i> 已同步至护理员手机端
+  </div>
+
+  <!-- 更新通知（护理员手机端） -->
+  <div class="update-notification" id="updateNotification">
+    <div class="d-flex align-items-center">
+      <i class="fa fa-bell text-warning me-2"></i>
+      <div>
+        <strong>数据已更新</strong>
+        <div style="font-size: 12px; margin-top: 5px;">排单员已修改工单，请刷新查看</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 引入jQuery和Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 修复模态框关闭后灰屏问题
+    document.addEventListener('DOMContentLoaded', function() {
+      // 监听所有模态框的隐藏事件
+      const modals = document.querySelectorAll('.modal');
+      modals.forEach(function(modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+          // 移除所有残留的遮罩层
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          backdrops.forEach(function(backdrop) {
+            backdrop.remove();
+          });
+          // 恢复body样式
+          document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
+        });
+      });
+      
+      // 处理嵌套模态框的情况
+      document.addEventListener('show.bs.modal', function(e) {
+        // 如果已经有打开的模态框，先关闭它
+        const existingModals = document.querySelectorAll('.modal.show');
+        existingModals.forEach(function(existingModal) {
+          if (existingModal !== e.target) {
+            const existingModalInstance = bootstrap.Modal.getInstance(existingModal);
+            if (existingModalInstance) {
+              existingModalInstance.hide();
+            }
+          }
+        });
+      });
+    });
+  </script>
+  <script>
+    // 视图切换逻辑
+    const calendarViewBtn = document.getElementById('calendarViewBtn');
+    if (calendarViewBtn) {
+      calendarViewBtn.addEventListener('click', function() {
+        this.classList.add('active');
+        const listViewBtn = document.getElementById('listViewBtn');
+        if (listViewBtn) listViewBtn.classList.remove('active');
+        const calendarView = document.getElementById('calendarView');
+        if (calendarView) calendarView.style.display = 'block';
+        const listView = document.getElementById('listView');
+        if (listView) listView.classList.remove('active');
+      });
+    }
+
+    const listViewBtn = document.getElementById('listViewBtn');
+    if (listViewBtn) {
+      listViewBtn.addEventListener('click', function() {
+        this.classList.add('active');
+        const calendarViewBtn = document.getElementById('calendarViewBtn');
+        if (calendarViewBtn) calendarViewBtn.classList.remove('active');
+        const calendarView = document.getElementById('calendarView');
+        if (calendarView) calendarView.style.display = 'none';
+        const listView = document.getElementById('listView');
+        if (listView) listView.classList.add('active');
+      });
+    }
+
+    // 刷新按钮
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function() {
+        loadWorkOrders();
+        showSyncAlert('数据已刷新', 'success');
+      });
+    }
+
+    // 同步到医保系统
+    const syncToInsuranceBtn = document.getElementById('syncToInsuranceBtn');
+    if (syncToInsuranceBtn) {
+      syncToInsuranceBtn.addEventListener('click', function() {
+        if (confirm('确定要将选中的工单同步到医保系统吗？')) {
+          syncToInsuranceSystem();
+        }
+      });
+    }
+
+    // 保存编辑
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    if (saveEditBtn) {
+      saveEditBtn.addEventListener('click', function() {
+        const editModalElement = document.getElementById('editOrderModal');
+        const editModal = bootstrap.Modal.getInstance(editModalElement);
+        const orderData = {
+          serviceObject: document.getElementById('editServiceObject').value,
+          serviceDate: document.getElementById('editServiceDate').value,
+          startTime: document.getElementById('editStartTime').value,
+          endTime: document.getElementById('editEndTime').value,
+          servicePackage: document.getElementById('editServicePackage').value
+        };
+        
+        // 保存工单修改
+        saveWorkOrder(orderData);
+        
+        // 同步到护理员手机端
+        syncToMobile(orderData);
+        
+        if (editModal) {
+          editModal.hide();
+        } else {
+          const modal = new bootstrap.Modal(editModalElement);
+          modal.hide();
+        }
+      });
+    }
+
+    // 加载工单数据
+    function loadWorkOrders() {
+      // 实际项目中这里会调用API获取数据
+      console.log('加载工单数据...');
+    }
+
+    // 保存工单修改
+    function saveWorkOrder(orderData) {
+      // 实际项目中这里会调用API保存数据
+      console.log('保存工单修改:', orderData);
+      showSyncAlert('工单已保存', 'success');
+    }
+
+    // 同步到护理员手机端
+    function syncToMobile(orderData) {
+      // 实际项目中这里会调用API同步到手机端
+      console.log('同步到护理员手机端:', orderData);
+      
+      // 模拟发送通知到护理员手机端
+      notifyMobileUser('工单数据已更新，请刷新查看');
+      
+      showSyncAlert('已同步至护理员手机端，护理员会收到更新提示', 'success');
+    }
+
+    // 通知护理员手机端
+    function notifyMobileUser(message) {
+      // 实际项目中这里会通过WebSocket或推送服务通知手机端
+      console.log('通知护理员:', message);
+      // 这里可以调用后端API发送推送通知
+    }
+
+    // 同步到医保系统
+    function syncToInsuranceSystem() {
+      // 实际项目中这里会调用医保系统API
+      console.log('同步到医保系统...');
+      
+      // 模拟同步过程
+      showSyncAlert('正在同步到医保系统...', 'info');
+      
+      setTimeout(() => {
+        showSyncAlert('已成功同步到医保系统', 'success');
+      }, 2000);
+    }
+
+    // 显示同步提示
+    function showSyncAlert(message, type) {
+      const syncAlert = document.getElementById('syncSuccessAlert');
+      syncAlert.textContent = message;
+      
+      // 根据类型设置样式
+      syncAlert.classList.remove('sync-success', 'sync-error');
+      if (type === 'success') {
+        syncAlert.classList.add('sync-success');
+      } else if (type === 'error') {
+        syncAlert.classList.add('sync-error');
+      }
+      
+      syncAlert.style.display = 'block';
+      setTimeout(() => {
+        syncAlert.style.display = 'none';
+      }, 3000);
+    }
+
+    // 设置编辑工单数据
+    function setEditOrderData(serviceObject, serviceDate, startTime, endTime, servicePackage, source) {
+      document.getElementById('editServiceObject').value = serviceObject;
+      document.getElementById('editServiceDate').value = serviceDate;
+      document.getElementById('editStartTime').value = startTime;
+      document.getElementById('editEndTime').value = endTime;
+      document.getElementById('editServicePackage').value = servicePackage;
+      
+      // 设置数据来源标识
+      const dataSourceBadge = document.getElementById('editDataSource');
+      if (source === 'mobile') {
+        dataSourceBadge.textContent = '手机端创建';
+        dataSourceBadge.className = 'data-source-badge source-mobile';
+      } else {
+        dataSourceBadge.textContent = 'PC端创建';
+        dataSourceBadge.className = 'data-source-badge source-pc';
+      }
+    }
+
+    // 初始化：加载工单数据
+    loadWorkOrders();
+
+    // ========== 拖拽排单功能 ==========
+    let currentMonth = new Date(2024, 10, 1); // 2024年11月
+    let scheduledOrders = {}; // 存储已排单的数据 {nurse-date: [{object, time, package}]}
+    let draggedElement = null;
+    let draggedData = null;
+
+    // 模拟服务对象数据
+    const serviceObjects = [
+      { id: 1, name: '郑三', idCard: '330623********1234', address: '石璜镇XX村123号', level: '一级' },
+      { id: 2, name: '王五', idCard: '330623********5678', address: '石璜镇XX村456号', level: '二级' },
+      { id: 3, name: '赵六', idCard: '330623********9012', address: '石璜镇XX村789号', level: '三级' },
+      { id: 4, name: '钱七', idCard: '330623********3456', address: '长乐镇XX路321号', level: '一级' },
+      { id: 5, name: '孙八', idCard: '330623********7890', address: '长乐镇XX路654号', level: '二级' },
+      { id: 6, name: '周九', idCard: '330623********2468', address: '甘霖镇XX街111号', level: '一级' },
+      { id: 7, name: '吴十', idCard: '330623********1357', address: '甘霖镇XX街222号', level: '二级' },
+      { id: 8, name: '陈十一', idCard: '330623********2469', address: '崇仁镇XX路333号', level: '三级' }
+    ];
+
+    // 初始化示例数据
+    function initExampleData() {
+      console.log('开始初始化示例数据...');
+      // 清空现有数据
+      scheduledOrders = {};
+      
+      // 李护理的排单示例
+      scheduledOrders['李护理-2024-11-01'] = [
+        {
+          objectId: 1,
+          objectName: '郑三',
+          objectIdCard: '330623********1234',
+          startTime: '08:00',
+          endTime: '10:00',
+          package: '生活照料+基础护理',
+          serviceItems: ['生活照料', '基础护理'],
+          remark: '需重点协助翻身'
+        },
+        {
+          nurseId: 1,
+          nurseName: '李护理',
+          clientId: 2,
+          objectId: 2,
+          objectName: '王五',
+          objectIdCard: '330623********5678',
+          prjId: 1,
+          planDate: '2024-11-01',
+          planStartTime: '2024-11-01T10:30',
+          planStopTime: '2024-11-01T12:30',
+          startTime: '10:30',
+          endTime: '12:30',
+          package: '生活照料',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        },
+        {
+          nurseId: 1,
+          nurseName: '李护理',
+          clientId: 3,
+          objectId: 3,
+          objectName: '赵六',
+          objectIdCard: '330623********9012',
+          prjId: 2,
+          planDate: '2024-11-01',
+          planStartTime: '2024-11-01T14:00',
+          planStopTime: '2024-11-01T16:00',
+          startTime: '14:00',
+          endTime: '16:00',
+          package: '基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      scheduledOrders['李护理-2024-11-03'] = [
+        {
+          nurseId: 1,
+          nurseName: '李护理',
+          clientId: 1,
+          objectId: 1,
+          objectName: '郑三',
+          objectIdCard: '330623********1234',
+          prjId: 3,
+          planDate: '2024-11-03',
+          planStartTime: '2024-11-03T08:00',
+          planStopTime: '2024-11-03T10:00',
+          startTime: '08:00',
+          endTime: '10:00',
+          package: '生活照料+基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        },
+        {
+          nurseId: 1,
+          nurseName: '李护理',
+          clientId: 4,
+          objectId: 4,
+          objectName: '钱七',
+          objectIdCard: '330623********3456',
+          prjId: 4,
+          planDate: '2024-11-03',
+          planStartTime: '2024-11-03T14:30',
+          planStopTime: '2024-11-03T16:30',
+          startTime: '14:30',
+          endTime: '16:30',
+          package: '全套餐',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      scheduledOrders['李护理-2024-11-05'] = [
+        {
+          nurseId: 1,
+          nurseName: '李护理',
+          clientId: 1,
+          objectId: 1,
+          objectName: '郑三',
+          objectIdCard: '330623********1234',
+          prjId: 3,
+          planDate: '2024-11-05',
+          planStartTime: '2024-11-05T08:00',
+          planStopTime: '2024-11-05T10:00',
+          startTime: '08:00',
+          endTime: '10:00',
+          package: '生活照料+基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      // 王护理的排单示例
+      scheduledOrders['王护理-2024-11-02'] = [
+        {
+          nurseId: 2,
+          nurseName: '王护理',
+          clientId: 4,
+          objectId: 4,
+          objectName: '钱七',
+          objectIdCard: '330623********3456',
+          prjId: 3,
+          planDate: '2024-11-02',
+          planStartTime: '2024-11-02T09:00',
+          planStopTime: '2024-11-02T11:00',
+          startTime: '09:00',
+          endTime: '11:00',
+          package: '生活照料+基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        },
+        {
+          nurseId: 2,
+          nurseName: '王护理',
+          clientId: 5,
+          objectId: 5,
+          objectName: '孙八',
+          objectIdCard: '330623********7890',
+          prjId: 2,
+          planDate: '2024-11-02',
+          planStartTime: '2024-11-02T14:00',
+          planStopTime: '2024-11-02T16:00',
+          startTime: '14:00',
+          endTime: '16:00',
+          package: '基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      scheduledOrders['王护理-2024-11-04'] = [
+        {
+          nurseId: 2,
+          nurseName: '王护理',
+          clientId: 4,
+          objectId: 4,
+          objectName: '钱七',
+          objectIdCard: '330623********3456',
+          prjId: 3,
+          planDate: '2024-11-04',
+          planStartTime: '2024-11-04T09:00',
+          planStopTime: '2024-11-04T11:00',
+          startTime: '09:00',
+          endTime: '11:00',
+          package: '生活照料+基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      scheduledOrders['王护理-2024-11-06'] = [
+        {
+          nurseId: 2,
+          nurseName: '王护理',
+          clientId: 5,
+          objectId: 5,
+          objectName: '孙八',
+          objectIdCard: '330623********7890',
+          prjId: 2,
+          planDate: '2024-11-06',
+          planStartTime: '2024-11-06T08:30',
+          planStopTime: '2024-11-06T10:30',
+          startTime: '08:30',
+          endTime: '10:30',
+          package: '基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        },
+        {
+          nurseId: 2,
+          nurseName: '王护理',
+          clientId: 6,
+          objectId: 6,
+          objectName: '周九',
+          objectIdCard: '330623********2468',
+          prjId: 4,
+          planDate: '2024-11-06',
+          planStartTime: '2024-11-06T13:30',
+          planStopTime: '2024-11-06T15:30',
+          startTime: '13:30',
+          endTime: '15:30',
+          package: '全套餐',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      // 张护理的排单示例
+      scheduledOrders['张护理-2024-11-01'] = [
+        {
+          nurseId: 3,
+          nurseName: '张护理',
+          clientId: 6,
+          objectId: 6,
+          objectName: '周九',
+          objectIdCard: '330623********2468',
+          prjId: 3,
+          planDate: '2024-11-01',
+          planStartTime: '2024-11-01T08:00',
+          planStopTime: '2024-11-01T10:00',
+          startTime: '08:00',
+          endTime: '10:00',
+          package: '生活照料+基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      scheduledOrders['张护理-2024-11-03'] = [
+        {
+          nurseId: 3,
+          nurseName: '张护理',
+          clientId: 7,
+          objectId: 7,
+          objectName: '吴十',
+          objectIdCard: '330623********1357',
+          prjId: 2,
+          planDate: '2024-11-03',
+          planStartTime: '2024-11-03T09:00',
+          planStopTime: '2024-11-03T11:00',
+          startTime: '09:00',
+          endTime: '11:00',
+          package: '基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        },
+        {
+          nurseId: 3,
+          nurseName: '张护理',
+          clientId: 8,
+          objectId: 8,
+          objectName: '陈十一',
+          objectIdCard: '330623********2469',
+          prjId: 1,
+          planDate: '2024-11-03',
+          planStartTime: '2024-11-03T14:00',
+          planStopTime: '2024-11-03T16:00',
+          startTime: '14:00',
+          endTime: '16:00',
+          package: '生活照料',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      scheduledOrders['张护理-2024-11-05'] = [
+        {
+          nurseId: 3,
+          nurseName: '张护理',
+          clientId: 6,
+          objectId: 6,
+          objectName: '周九',
+          objectIdCard: '330623********2468',
+          prjId: 3,
+          planDate: '2024-11-05',
+          planStartTime: '2024-11-05T08:00',
+          planStopTime: '2024-11-05T10:00',
+          startTime: '08:00',
+          endTime: '10:00',
+          package: '生活照料+基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        },
+        {
+          nurseId: 3,
+          nurseName: '张护理',
+          clientId: 7,
+          objectId: 7,
+          objectName: '吴十',
+          objectIdCard: '330623********1357',
+          prjId: 2,
+          planDate: '2024-11-05',
+          planStartTime: '2024-11-05T10:30',
+          planStopTime: '2024-11-05T12:30',
+          startTime: '10:30',
+          endTime: '12:30',
+          package: '基础护理',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+
+      scheduledOrders['张护理-2024-11-07'] = [
+        {
+          nurseId: 3,
+          nurseName: '张护理',
+          clientId: 8,
+          objectId: 8,
+          objectName: '陈十一',
+          objectIdCard: '330623********2469',
+          prjId: 1,
+          planDate: '2024-11-07',
+          planStartTime: '2024-11-07T08:30',
+          planStopTime: '2024-11-07T10:30',
+          startTime: '08:30',
+          endTime: '10:30',
+          package: '生活照料',
+          planHour: 2.0,
+          workHour: null,
+          result: 0,
+          updMark: 1,
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0
+        }
+      ];
+      
+      console.log('示例数据初始化完成，共', Object.keys(scheduledOrders).length, '个日期有排单');
+      console.log('示例数据详情:', scheduledOrders);
+    }
+
+    // 初始化拖拽排单
+    function initDragSchedule() {
+      // 初始化示例数据（只在第一次调用时初始化）
+      if (Object.keys(scheduledOrders).length === 0) {
+        console.log('初始化示例数据...');
+        initExampleData();
+      }
+      console.log('初始化排单，示例数据数量:', Object.keys(scheduledOrders).length);
+      console.log('示例数据详情:', scheduledOrders);
+      
+      // 自动选择第一个护理员（如果未选择）
+      const nurseSelect = document.getElementById('dragNurseSelect');
+      if (nurseSelect && !nurseSelect.value) {
+        nurseSelect.value = '李护理';
+        console.log('自动选择护理员: 李护理');
+      }
+      
+      renderServiceObjectList();
+      renderCalendar();
+      setupDragAndDrop();
+    }
+
+    // 渲染服务对象列表
+    function renderServiceObjectList() {
+      const objectList = document.getElementById('objectList');
+      const searchInput = document.getElementById('objectSearchInput');
+      const searchTerm = searchInput.value.toLowerCase();
+
+      objectList.innerHTML = '';
+      
+      const filteredObjects = serviceObjects.filter(obj => 
+        obj.name.toLowerCase().includes(searchTerm) || 
+        obj.idCard.includes(searchTerm)
+      );
+
+      if (filteredObjects.length === 0) {
+        objectList.innerHTML = '<div class="empty-state"><i class="fa fa-search"></i><div>未找到服务对象</div></div>';
+        return;
+      }
+
+      filteredObjects.forEach(obj => {
+        const div = document.createElement('div');
+        div.className = 'draggable-object';
+        div.draggable = true;
+        div.dataset.objectId = obj.id;
+        div.dataset.objectName = obj.name;
+        div.dataset.objectIdCard = obj.idCard;
+        
+        div.innerHTML = `
+          <div class="object-name">${obj.name}</div>
+          <div class="object-info">${obj.idCard}</div>
+          <div class="object-info">${obj.address} | ${obj.level}</div>
+        `;
+
+        // 拖拽事件
+        div.addEventListener('dragstart', handleDragStart);
+        div.addEventListener('dragend', handleDragEnd);
+        
+        objectList.appendChild(div);
+      });
+    }
+
+    // 渲染日历
+    function renderCalendar() {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDay = new Date(year, month, 1).getDay();
+      
+      const header = document.getElementById('calendarHeader');
+      const body = document.getElementById('calendarBody');
+      const monthDisplay = document.getElementById('currentMonthDisplay');
+      
+      if (!header || !body || !monthDisplay) {
+        console.error('日历元素未找到');
+        return;
+      }
+      
+      monthDisplay.textContent = `${year}年${month + 1}月`;
+      
+      console.log('渲染日历，当前月份:', year, month + 1);
+      console.log('已排单数据:', scheduledOrders);
+
+      // 生成表头
+      let headerHtml = '<tr><th class="nurse-header">护理员</th>';
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const weekDay = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
+        headerHtml += `<th>${day}日<br><small style="font-weight: normal; color: #999;">${weekDay}</small></th>`;
+      }
+      headerHtml += '</tr>';
+      header.innerHTML = headerHtml;
+
+      // 生成护理员行
+      const nurses = ['李护理', '王护理', '张护理'];
+      body.innerHTML = '';
+      
+      nurses.forEach(nurse => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<th class="nurse-header">${nurse}</th>`;
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const cell = document.createElement('td');
+          cell.className = 'drop-cell';
+          cell.dataset.nurse = nurse;
+          cell.dataset.date = dateStr;
+          
+          // 显示已排单的工单
+          const key = `${nurse}-${dateStr}`;
+          const orders = scheduledOrders[key];
+          if (orders && Array.isArray(orders) && orders.length > 0) {
+            cell.classList.add('has-order');
+            orders.forEach((order, index) => {
+              if (order && order.objectName) {
+                try {
+                  const orderDiv = createOrderElement(order, index, key);
+                  cell.appendChild(orderDiv);
+                } catch (e) {
+                  console.error('创建工单元素失败:', e, order);
+                }
+              }
+            });
+          } else {
+            // 空单元格提示
+            cell.innerHTML = '<div style="font-size: 11px; color: #999; padding: 5px; text-align: center;">拖拽服务对象<br>到此排单</div>';
+          }
+          
+          row.appendChild(cell);
+        }
+        
+        body.appendChild(row);
+      });
+    }
+
+    // 创建工单元素
+    function createOrderElement(order, index, key) {
+      const div = document.createElement('div');
+      div.className = 'scheduled-order';
+      div.draggable = true;
+      div.dataset.orderIndex = index;
+      div.dataset.orderKey = key;
+      
+      const packageText = order.package || '未设置套餐';
+      const serviceItems = order.serviceItems || [];
+      const itemsText = serviceItems.length > 0 ? serviceItems.join('、') : '未设置项目';
+      
+      div.innerHTML = `
+        <div class="order-time">${order.startTime}-${order.endTime}</div>
+        <div class="order-name">${order.objectName}</div>
+        <div class="order-package">${packageText}</div>
+        <div class="order-actions">
+          <button class="btn-delete" onclick="event.stopPropagation(); deleteOrder('${key}', ${index})" title="删除">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+      `;
+
+      // 点击打开详情弹窗
+      div.addEventListener('click', function(e) {
+        if (!e.target.closest('.order-actions')) {
+          showOrderDetail(key, index);
+        }
+      });
+
+      div.addEventListener('dragstart', handleOrderDragStart);
+      div.addEventListener('dragend', handleDragEnd);
+      
+      return div;
+    }
+
+    // 设置拖拽和放置
+    function setupDragAndDrop() {
+      const dropCells = document.querySelectorAll('.drop-cell');
+      
+      dropCells.forEach(cell => {
+        cell.addEventListener('dragover', handleDragOver);
+        cell.addEventListener('dragenter', handleDragEnter);
+        cell.addEventListener('dragleave', handleDragLeave);
+        cell.addEventListener('drop', handleDrop);
+      });
+    }
+
+    // 拖拽开始（服务对象）
+    function handleDragStart(e) {
+      draggedElement = this;
+      draggedData = {
+        type: 'object',
+        objectId: this.dataset.objectId,
+        objectName: this.dataset.objectName,
+        objectIdCard: this.dataset.objectIdCard
+      };
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', JSON.stringify(draggedData));
+    }
+
+    // 拖拽开始（已排单的工单）
+    function handleOrderDragStart(e) {
+      draggedElement = this;
+      draggedData = {
+        type: 'order',
+        orderKey: this.dataset.orderKey,
+        orderIndex: parseInt(this.dataset.orderIndex)
+      };
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', JSON.stringify(draggedData));
+      e.stopPropagation();
+    }
+
+    // 拖拽结束
+    function handleDragEnd(e) {
+      if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+      }
+      document.querySelectorAll('.drop-cell').forEach(cell => {
+        cell.classList.remove('drag-over');
+      });
+      draggedElement = null;
+      draggedData = null;
+    }
+
+    // 拖拽悬停
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    // 拖拽进入
+    function handleDragEnter(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    }
+
+    // 拖拽离开
+    function handleDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+
+    // 放置
+    function handleDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      if (!draggedData) {
+        try {
+          draggedData = JSON.parse(e.dataTransfer.getData('text/plain'));
+        } catch (err) {
+          return;
+        }
+      }
+
+      const nurse = this.dataset.nurse;
+      const date = this.dataset.date;
+      const key = `${nurse}-${date}`;
+
+      // 检查是否选择了护理员
+      const selectedNurse = document.getElementById('dragNurseSelect').value;
+      
+      if (!selectedNurse) {
+        alert('请先选择护理员！');
+        return;
+      }
+
+      if (draggedData.type === 'object') {
+        // 从服务对象列表拖拽
+        const startTime = document.getElementById('defaultStartTime').value;
+        const endTime = document.getElementById('defaultEndTime').value;
+        
+        // 检查时间冲突
+        if (checkTimeConflict(key, startTime, endTime)) {
+          if (!confirm('该时间段已有排单，是否继续添加？')) {
+            return;
+          }
+        }
+
+        if (!scheduledOrders[key]) {
+          scheduledOrders[key] = [];
+        }
+
+        // 获取护理员ID
+        const nurseIdMap = { '李护理': 1, '王护理': 2, '张护理': 3 };
+        const nurseId = nurseIdMap[selectedNurse] || 1;
+        
+        // 创建符合数据库结构的工单对象
+        const planStartDateTime = `${date}T${startTime}`;
+        const planStopDateTime = `${date}T${endTime}`;
+        const startDateTime = new Date(planStartDateTime);
+        const stopDateTime = new Date(planStopDateTime);
+        const planHour = (stopDateTime - startDateTime) / (1000 * 60 * 60);
+        
+        scheduledOrders[key].push({
+          nurseId: nurseId,
+          nurseName: selectedNurse,
+          clientId: draggedData.objectId,
+          objectId: draggedData.objectId,
+          objectName: draggedData.objectName,
+          objectIdCard: draggedData.objectIdCard,
+          prjId: null, // 待设置
+          planDate: date,
+          planStartTime: planStartDateTime,
+          planStopTime: planStopDateTime,
+          startTime: startTime, // 保留时间部分用于显示
+          endTime: endTime, // 保留时间部分用于显示
+          planHour: planHour.toFixed(2),
+          workHour: null,
+          result: 0, // 待执行
+          updMark: 1, // PC端更新
+          checkExpect: false,
+          readed: false,
+          completed: false,
+          cmpResult: 0,
+          package: '', // 初始为空，点击后设置
+          serviceItems: [] // 初始为空，点击后设置
+        });
+
+        renderCalendar();
+        setupDragAndDrop();
+      } else if (draggedData.type === 'order') {
+        // 移动已排单的工单
+        const sourceKey = draggedData.orderKey;
+        const orderIndex = draggedData.orderIndex;
+        
+        if (sourceKey === key) {
+          return; // 同一位置，不处理
+        }
+
+        const order = scheduledOrders[sourceKey][orderIndex];
+        
+        // 检查时间冲突
+        if (checkTimeConflict(key, order.startTime, order.endTime, sourceKey, orderIndex)) {
+          if (!confirm('该时间段已有排单，是否继续移动？')) {
+            return;
+          }
+        }
+
+        // 从原位置移除
+        scheduledOrders[sourceKey].splice(orderIndex, 1);
+        if (scheduledOrders[sourceKey].length === 0) {
+          delete scheduledOrders[sourceKey];
+        }
+
+        // 添加到新位置
+        if (!scheduledOrders[key]) {
+          scheduledOrders[key] = [];
+        }
+        scheduledOrders[key].push(order);
+
+        renderCalendar();
+        setupDragAndDrop();
+      }
+    }
+
+    // 检查时间冲突
+    function checkTimeConflict(key, startTime, endTime, excludeKey = null, excludeIndex = null) {
+      if (!scheduledOrders[key]) {
+        return false;
+      }
+
+      return scheduledOrders[key].some((order, index) => {
+        if (excludeKey === key && excludeIndex === index) {
+          return false;
+        }
+        return (startTime < order.endTime && endTime > order.startTime);
+      });
+    }
+
+    // 显示工单详情弹窗（只保留计划日期、计划开始时间和结束时间）
+    function showOrderDetail(key, index) {
+      try {
+        const order = scheduledOrders[key][index];
+        if (!order) {
+          console.error('工单不存在:', key, index);
+          alert('工单不存在');
+          return;
+        }
+        
+        const [nurse, date] = key.split('-');
+        
+        // 填充弹窗数据（只保留计划日期、计划开始时间和结束时间）
+        // 计划日期
+        const planDateInput = document.getElementById('detailPlanDate');
+        if (planDateInput) planDateInput.value = order.planDate || date;
+        
+        // 计划开始时间和结束时间
+        const planStartTime = document.getElementById('detailPlanStartTime');
+        const planStopTime = document.getElementById('detailPlanStopTime');
+        if (planStartTime) {
+          if (order.planStartTime) {
+            planStartTime.value = order.planStartTime;
+          } else if (order.startTime && date) {
+            const startDateTime = `${date}T${order.startTime}`;
+            planStartTime.value = startDateTime;
+          }
+        }
+        if (planStopTime) {
+          if (order.planStopTime) {
+            planStopTime.value = order.planStopTime;
+          } else if (order.endTime && date) {
+            const endDateTime = `${date}T${order.endTime}`;
+            planStopTime.value = endDateTime;
+          }
+        }
+        
+        // 保存订单key和index用于后续更新
+        const detailOrderKey = document.getElementById('detailOrderKey');
+        const detailOrderIndex = document.getElementById('detailOrderIndex');
+        if (detailOrderKey) detailOrderKey.value = key;
+        if (detailOrderIndex) detailOrderIndex.value = index;
+        
+        // 显示弹窗
+        const modalElement = document.getElementById('orderDetailModal');
+        if (modalElement) {
+          const modal = new bootstrap.Modal(modalElement);
+          modal.show();
+        } else {
+          console.error('弹窗元素不存在: orderDetailModal');
+          alert('弹窗元素不存在');
+        }
+      } catch (error) {
+        console.error('打开工单详情失败:', error);
+        alert('打开工单详情失败: ' + error.message);
+      }
+    }
+
+    // 更新套餐提示（已移除，因为现在使用套餐ID选择）
+    function updatePackageTip() {
+      // 此函数已不再需要，因为现在使用套餐ID下拉选择
+      // 保留函数以避免调用错误
+    }
+
+    // 删除工单
+    function deleteOrder(key, index) {
+      if (confirm('确定要删除这个工单吗？')) {
+        scheduledOrders[key].splice(index, 1);
+        if (scheduledOrders[key].length === 0) {
+          delete scheduledOrders[key];
+        }
+        renderCalendar();
+        setupDragAndDrop();
+      }
+    }
+
+    // 月份切换
+    const prevMonthBtn = document.getElementById('prevMonthBtn');
+    if (prevMonthBtn) {
+      prevMonthBtn.addEventListener('click', function() {
+        currentMonth.setMonth(currentMonth.getMonth() - 1);
+        renderCalendar();
+        setupDragAndDrop();
+      });
+    }
+
+    const nextMonthBtn = document.getElementById('nextMonthBtn');
+    if (nextMonthBtn) {
+      nextMonthBtn.addEventListener('click', function() {
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+        renderCalendar();
+        setupDragAndDrop();
+      });
+    }
+
+    // 搜索服务对象
+    const objectSearchInput = document.getElementById('objectSearchInput');
+    if (objectSearchInput) {
+      objectSearchInput.addEventListener('input', function() {
+        renderServiceObjectList();
+      });
+    }
+
+    // 清空所有排单
+    const clearAllOrdersBtn = document.getElementById('clearAllOrdersBtn');
+    if (clearAllOrdersBtn) {
+      clearAllOrdersBtn.addEventListener('click', function() {
+        if (confirm('确定要清空所有排单吗？')) {
+          scheduledOrders = {};
+          renderCalendar();
+          setupDragAndDrop();
+        }
+      });
+    }
+
+    // 保存排单详情（按照数据库结构）
+    const saveDetailBtn = document.getElementById('saveDetailBtn');
+    if (saveDetailBtn) {
+      saveDetailBtn.addEventListener('click', function() {
+        const key = document.getElementById('detailOrderKey').value;
+        const index = parseInt(document.getElementById('detailOrderIndex').value);
+        const order = scheduledOrders[key][index];
+        
+        // 获取表单数据（红色字段：派单和改单时需要编辑）
+        const nurseId = document.getElementById('detailNurseId').value;
+        const clientId = document.getElementById('detailClientId').value;
+        const prjId = document.getElementById('detailPrjId').value;
+        const planDate = document.getElementById('detailPlanDate').value;
+        const planStartTime = document.getElementById('detailPlanStartTime').value;
+        const planStopTime = document.getElementById('detailPlanStopTime').value;
+        const updMark = document.getElementById('detailUpdMark').value;
+        
+        // 验证必填字段
+        if (!nurseId) {
+          alert('请选择护理员！');
+          return;
+        }
+        
+        if (!clientId) {
+          alert('请选择服务对象！');
+          return;
+        }
+        
+        if (!prjId) {
+          alert('请选择套餐！');
+          return;
+        }
+        
+        if (!planStartTime || !planStopTime) {
+          alert('请填写计划开始时间和结束时间！');
+          return;
+        }
+        
+        const startDateTime = new Date(planStartTime);
+        const stopDateTime = new Date(planStopTime);
+        
+        if (startDateTime >= stopDateTime) {
+          alert('计划开始时间必须小于结束时间！');
+          return;
+        }
+        
+        // 计算计划结算工时（小时）
+        const planHour = (stopDateTime - startDateTime) / (1000 * 60 * 60);
+        
+        // 提取时间部分（HH:MM）
+        const startTime = planStartTime.split('T')[1] || '';
+        const endTime = planStopTime.split('T')[1] || '';
+        
+        // 检查时间冲突（排除当前工单）
+        if (checkTimeConflict(key, startTime, endTime, key, index)) {
+          alert('该时间段与其他工单冲突！');
+          return;
+        }
+        
+        // 更新工单数据（按照数据库结构）
+        order.nurseId = parseInt(nurseId);
+        order.nurseName = document.getElementById('detailNurseName').value;
+        order.clientId = parseInt(clientId);
+        order.objectName = document.getElementById('detailClientName').value;
+        order.prjId = parseInt(prjId);
+        order.planDate = planDate;
+        order.planStartTime = planStartTime;
+        order.planStopTime = planStopTime;
+        order.startTime = startTime; // 保留时间部分用于显示
+        order.endTime = endTime; // 保留时间部分用于显示
+        order.planHour = planHour.toFixed(2);
+        order.updMark = parseInt(updMark);
+        
+        // 自动设置 readed 和 completed 为 false（派单和改单时）
+        order.readed = false;
+        order.completed = false;
+        
+        // 关闭弹窗
+        const detailModalElement = document.getElementById('orderDetailModal');
+        const modal = bootstrap.Modal.getInstance(detailModalElement);
+        if (modal) {
+          modal.hide();
+        } else {
+          const newModal = new bootstrap.Modal(detailModalElement);
+          newModal.hide();
+        }
+        
+        // 重新渲染日历
+        renderCalendar();
+        setupDragAndDrop();
+        
+        showSyncAlert('工单详情已保存', 'success');
+      });
+    }
+
+    // 套餐选择变化时更新提示（已移除，因为现在使用套餐ID选择）
+    // const detailPackage = document.getElementById('detailPackage');
+    // if (detailPackage) {
+    //   detailPackage.addEventListener('change', updatePackageTip);
+    // }
+
+    // 保存排单
+    const saveDragOrdersBtn = document.getElementById('saveDragOrdersBtn');
+    if (saveDragOrdersBtn) {
+      saveDragOrdersBtn.addEventListener('click', function() {
+        const selectedNurse = document.getElementById('dragNurseSelect').value;
+        if (!selectedNurse) {
+          alert('请先选择护理员！');
+          return;
+        }
+
+        // 检查是否有未设置套餐的工单
+        let incompleteOrders = 0;
+        Object.keys(scheduledOrders).forEach(key => {
+          if (key.startsWith(selectedNurse + '-')) {
+            scheduledOrders[key].forEach(order => {
+              if (!order.package || !order.serviceItems || order.serviceItems.length === 0) {
+                incompleteOrders++;
+              }
+            });
+          }
+        });
+
+        if (incompleteOrders > 0) {
+          if (!confirm(`有 ${incompleteOrders} 条工单未设置套餐或服务项目，是否继续保存？`)) {
+            return;
+          }
+        }
+
+        // 统计工单数量
+        let totalOrders = 0;
+        Object.keys(scheduledOrders).forEach(key => {
+          if (key.startsWith(selectedNurse + '-')) {
+            totalOrders += scheduledOrders[key].length;
+          }
+        });
+
+        if (totalOrders === 0) {
+          alert('没有需要保存的工单！');
+          return;
+        }
+
+        // 实际项目中这里会调用API保存数据
+        console.log('保存排单数据:', scheduledOrders);
+        showSyncAlert(`成功保存 ${totalOrders} 条工单`, 'success');
+      });
+    }
+
+    // 护理员选择变化时重新渲染日历
+    const dragNurseSelect = document.getElementById('dragNurseSelect');
+    if (dragNurseSelect) {
+      dragNurseSelect.addEventListener('change', function() {
+        console.log('护理员选择变化:', this.value);
+        // 确保示例数据已加载
+        if (Object.keys(scheduledOrders).length === 0) {
+          initExampleData();
+        }
+        renderCalendar();
+        setupDragAndDrop();
+      });
+    }
+
+    // 当切换到手工排单标签页时初始化
+    function setupManualOrderTab() {
+      // 监听标签页切换事件
+      const manualOrderTab = document.getElementById('manual-order-tab');
+      if (manualOrderTab) {
+        manualOrderTab.addEventListener('shown.bs.tab', function() {
+          console.log('切换到手工排单标签页');
+          initDragSchedule();
+        });
+      }
+      
+      // 页面加载时检查是否需要初始化
+      setTimeout(function() {
+        const manualOrderPane = document.getElementById('manual-order');
+        if (manualOrderPane) {
+          // 检查标签页是否可见
+          const isVisible = manualOrderPane.classList.contains('active') || 
+                           manualOrderPane.classList.contains('show') ||
+                           window.getComputedStyle(manualOrderPane).display !== 'none';
+          console.log('手工排单标签页可见状态:', isVisible);
+          if (isVisible) {
+            console.log('初始化排单功能');
+            initDragSchedule();
+          }
+        }
+      }, 500);
+    }
+    
+    // 页面加载完成后设置
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupManualOrderTab);
+    } else {
+      setupManualOrderTab();
+    }
+    
+    // 强制初始化一次示例数据（确保数据存在）
+    setTimeout(function() {
+      console.log('=== 强制初始化检查 ===');
+      console.log('当前示例数据数量:', Object.keys(scheduledOrders).length);
+      
+      if (Object.keys(scheduledOrders).length === 0) {
+        console.log('强制初始化示例数据');
+        initExampleData();
+        console.log('示例数据已初始化，数量:', Object.keys(scheduledOrders).length);
+        console.log('示例数据键:', Object.keys(scheduledOrders));
+      }
+      
+      // 如果手工排单标签页已显示，立即渲染
+      const manualOrderPane = document.getElementById('manual-order');
+      const calendarBody = document.getElementById('calendarBody');
+      const calendarHeader = document.getElementById('calendarHeader');
+      
+      console.log('元素检查 - manualOrderPane:', manualOrderPane);
+      console.log('元素检查 - calendarBody:', calendarBody);
+      console.log('元素检查 - calendarHeader:', calendarHeader);
+      
+      if (manualOrderPane && calendarBody && calendarHeader) {
+        const isVisible = manualOrderPane.classList.contains('active') || 
+                         manualOrderPane.classList.contains('show') ||
+                         window.getComputedStyle(manualOrderPane).display !== 'none';
+        console.log('手工排单标签页可见状态:', isVisible);
+        
+        if (isVisible) {
+          console.log('立即渲染日历');
+          // 自动选择第一个护理员
+          const nurseSelect = document.getElementById('dragNurseSelect');
+          if (nurseSelect && !nurseSelect.value) {
+            nurseSelect.value = '李护理';
+            console.log('自动选择护理员: 李护理');
+          }
+          renderCalendar();
+          setupDragAndDrop();
+        } else {
+          console.log('标签页不可见，等待用户切换');
+        }
+      } else {
+        console.error('关键元素未找到，无法渲染');
+      }
+    }, 1000);
+
+    // 工单同步管理功能 - 直接切换状态（无需弹窗）
+    // 切换同步状态（点击状态badge或按钮）
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.sync-status-clickable') || e.target.closest('.sync-toggle-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const target = e.target.closest('.sync-status-clickable') || e.target.closest('.sync-toggle-btn');
+        const row = target.closest('tr');
+        if (!row) return;
+        
+        const orderId = row.dataset.orderId;
+        const currentStatus = row.dataset.syncStatus;
+        const action = target.dataset.action;
+        
+        // 确定新状态
+        let newStatus;
+        if (action === 'mark-sync' || (action === 'toggle-sync' && currentStatus === 'unsynced')) {
+          newStatus = 'synced';
+        } else if (action === 'resync' || (action === 'toggle-sync' && currentStatus === 'resync')) {
+          newStatus = 'synced';
+        } else if (action === 'toggle-sync' && currentStatus === 'synced') {
+          // 已同步状态点击后可以取消同步（根据业务需求）
+          if (confirm('确定要取消同步标记吗？')) {
+            newStatus = 'unsynced';
+          } else {
+            return;
+          }
+        } else {
+          return;
+        }
+        
+        // 更新行状态
+        updateSyncStatus(row, orderId, newStatus);
+      }
+    });
+
+    // 更新同步状态
+    function updateSyncStatus(row, orderId, newStatus) {
+      const statusMap = {
+        'unsynced': { text: '未同步', class: 'status-unsynced', rowClass: 'row-unsynced', btnText: '标记同步', btnClass: 'btn-info', btnAction: 'mark-sync' },
+        'synced': { text: '已同步', class: 'status-synced', rowClass: 'row-synced', btnText: '重新同步', btnClass: 'btn-warning', btnAction: 'resync' },
+        'resync': { text: '需重新同步', class: 'status-resync', rowClass: 'row-resync', btnText: '重新同步', btnClass: 'btn-warning', btnAction: 'resync' },
+        'deleted': { text: '已删除（需医保废弃）', class: 'status-deleted', rowClass: 'row-deleted', btnText: '', btnClass: '', btnAction: '' }
+      };
+      
+      const statusInfo = statusMap[newStatus];
+      if (!statusInfo) return;
+      
+      // 更新行数据属性
+      row.dataset.syncStatus = newStatus;
+      
+      // 更新行样式类
+      row.classList.remove('row-unsynced', 'row-synced', 'row-resync', 'row-deleted');
+      row.classList.add(statusInfo.rowClass);
+      
+      // 更新状态badge
+      const statusBadge = row.querySelector('.sync-status-clickable');
+      if (statusBadge) {
+        statusBadge.classList.remove('status-unsynced', 'status-synced', 'status-resync', 'status-deleted');
+        statusBadge.classList.add(statusInfo.class);
+        statusBadge.textContent = statusInfo.text;
+      }
+      
+      // 更新操作按钮
+      const btn = row.querySelector('.sync-toggle-btn');
+      if (btn && statusInfo.btnText) {
+        btn.classList.remove('btn-info', 'btn-warning');
+        btn.classList.add(statusInfo.btnClass);
+        btn.textContent = statusInfo.btnText;
+        btn.dataset.action = statusInfo.btnAction;
+        btn.style.display = '';
+      } else if (btn) {
+        btn.style.display = 'none';
+      }
+      
+      // 显示提示
+      showSyncMessage('success', `工单 ${orderId} 已标记为${statusInfo.text}`);
+      
+      // 实际项目中这里应该调用API保存状态
+      // saveSyncStatus(orderId, newStatus);
+    }
+
+    // 显示同步消息
+    function showSyncMessage(type, message) {
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+      const alert = document.createElement('div');
+      alert.className = `alert ${alertClass} alert-dismissible fade show`;
+      alert.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+      alert.innerHTML = `
+        <strong>${type === 'success' ? '成功' : '错误'}</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      document.body.appendChild(alert);
+      setTimeout(() => {
+        alert.remove();
+      }, 2000);
+    }
+
+
+    // 标记同步确认
+    const confirmMarkSyncBtn = document.getElementById('confirmMarkSyncBtn');
+    if (confirmMarkSyncBtn) {
+      confirmMarkSyncBtn.addEventListener('click', function() {
+        const syncDate = document.getElementById('syncDate').value;
+        
+        if (!syncDate) {
+          alert('请选择同步日期！');
+          return;
+        }
+        
+        // 实际项目中这里会调用API标记同步
+        console.log('标记同步:', { syncDate });
+        showSyncAlert('工单已标记为已同步', 'success');
+        
+        const markModalElement = document.getElementById('markSyncModal');
+        const markModal = bootstrap.Modal.getInstance(markModalElement);
+        if (markModal) {
+          markModal.hide();
+        } else {
+          const newModal = new bootstrap.Modal(markModalElement);
+          newModal.hide();
+        }
+        
+        // 确保遮罩层被移除
+        setTimeout(() => {
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          backdrops.forEach(backdrop => backdrop.remove());
+          document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
+        }, 300);
+      });
+    }
+
+    // 批量标记同步
+    const batchSyncBtn = document.getElementById('batchSyncBtn');
+    if (batchSyncBtn) {
+      batchSyncBtn.addEventListener('click', function() {
+        const checkedBoxes = document.querySelectorAll('#syncOrderTableBody input[name="syncItem"]:checked');
+        if (checkedBoxes.length === 0) {
+          alert('请至少选择一条工单！');
+          return;
+        }
+        
+        if (confirm(`确定要批量标记 ${checkedBoxes.length} 条工单为已同步吗？`)) {
+          // 实际项目中这里会调用API批量标记
+          console.log('批量标记同步:', checkedBoxes.length);
+          showSyncAlert(`成功标记 ${checkedBoxes.length} 条工单为已同步`, 'success');
+          
+          // 取消选中
+          checkedBoxes.forEach(cb => cb.checked = false);
+          const selectAll = document.getElementById('syncSelectAll');
+          if (selectAll) selectAll.checked = false;
+          this.disabled = true;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
